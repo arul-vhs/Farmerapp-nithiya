@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriSense AI - Smart Crop Diagnosis & Remedy Guide</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@300;400;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Leaflet CSS for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <!-- Leaflet JS for Maps -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-leaf"></i>
+                </div>
+                <div class="logo-text">
+                    <h1 data-lang="title">AgriSense AI</h1>
+                    <p data-lang="subtitle">Empowering farmers with smart digital diagnostics</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <!-- Speech Toggle -->
+                <button id="btn-audio-guide" class="btn-icon" title="Listen to instructions / வழிமுறைகளைக் கேளுங்கள்">
+                    <i class="fa-solid fa-volume-high"></i>
+                </button>
+                <!-- Language Selector -->
+                <div class="lang-selector">
+                    <button id="lang-en" class="lang-btn active">English</button>
+                    <button id="lang-ta" class="lang-btn">தமிழ்</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="app-main-content">
+        <div class="grid-container">
+            <!-- Left Panel: Upload and Sample Selection -->
+            <section class="panel-left">
+                <div class="card card-upload">
+                    <h2 class="card-title" data-lang="upload_title">Analyze Crop Health</h2>
+                    <p class="card-desc" data-lang="upload_desc">Upload a photo of your infected crop to diagnose diseases, find fertilizers, and plan treatments.</p>
+                    
+                    <!-- File Drag and Drop Zone -->
+                    <div id="drop-zone" class="upload-dropzone">
+                        <input type="file" id="file-input" accept="image/*" class="file-hidden">
+                        <div class="dropzone-content">
+                            <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
+                            <p class="dropzone-text-main" data-lang="drop_main">Drag and drop crop image here</p>
+                            <p class="dropzone-text-sub" data-lang="drop_sub">or click to browse files</p>
+                            <span class="btn btn-primary btn-browse" data-lang="browse_btn">Select Photo</span>
+                        </div>
+                        <div id="preview-container" class="preview-hidden">
+                            <img id="image-preview" src="#" alt="Crop Preview">
+                            <div class="scanner-laser"></div>
+                            <button id="btn-remove-photo" class="btn-circle-danger" title="Remove image">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Analysis Trigger -->
+                    <button id="btn-analyze" class="btn btn-success btn-full btn-disabled" disabled>
+                        <i class="fa-solid fa-microscope"></i> <span data-lang="analyze_btn">Start Diagnostic Scan</span>
+                    </button>
+
+                    <!-- OR Divider -->
+                    <div class="or-divider">
+                        <span data-lang="or_text">OR TRY SAMPLE CROPS</span>
+                    </div>
+
+                    <!-- Quick Sample Selector -->
+                    <div class="sample-grid">
+                        <button class="sample-btn" data-crop="tomato">
+                            <img src="https://images.unsplash.com/photo-1592417817098-8f3d6eb19675?auto=format&fit=crop&q=80&w=120" alt="Tomato">
+                            <span data-lang="crop_tomato">Tomato</span>
+                        </button>
+                        <button class="sample-btn" data-crop="paddy">
+                            <img src="https://images.unsplash.com/photo-1536657244441-c12402b9f0da?auto=format&fit=crop&q=80&w=120" alt="Paddy">
+                            <span data-lang="crop_paddy">Rice / Paddy</span>
+                        </button>
+                        <button class="sample-btn" data-crop="corn">
+                            <img src="https://images.unsplash.com/photo-1551754625-70c90487530d?auto=format&fit=crop&q=80&w=120" alt="Corn">
+                            <span data-lang="crop_corn">Corn / Maize</span>
+                        </button>
+                        <button class="sample-btn" data-crop="banana">
+                            <img src="https://images.unsplash.com/photo-1566393028639-d108a42c46a7?auto=format&fit=crop&q=80&w=120" alt="Banana">
+                            <span data-lang="crop_banana">Banana</span>
+                        </button>
+                        <button class="sample-btn" data-crop="coconut">
+                            <img src="https://images.unsplash.com/photo-1543158266-0066955047b1?auto=format&fit=crop&q=80&w=120" alt="Coconut">
+                            <span data-lang="crop_coconut">Coconut</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Info Cards -->
+                <div class="card card-tips">
+                    <h3 class="tips-title"><i class="fa-solid fa-lightbulb icon-gold"></i> <span data-lang="tips_title">Smart Farmer Tips</span></h3>
+                    <ul class="tips-list">
+                        <li data-lang="tip_1">Take high-quality close-up photos of leaves or stems in good sunlight.</li>
+                        <li data-lang="tip_2">Always apply pesticides in morning or late evening to prevent crop stress.</li>
+                        <li data-lang="tip_3">Maintain organic crop rotation cycles to naturally enrich the soil.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Right Panel: Results & Actions -->
+            <section class="panel-right">
+                <!-- Initial State Placeholder -->
+                <div id="results-placeholder" class="card placeholder-card">
+                    <div class="placeholder-icon-container">
+                        <i class="fa-solid fa-robot pulse-animation"></i>
+                    </div>
+                    <h2 data-lang="placeholder_h2">Awaiting Diagnostic Scan</h2>
+                    <p data-lang="placeholder_p">Upload a disease image or select one of our preloaded crop samples on the left to activate AgriSense AI analysis.</p>
+                </div>
+
+                <!-- Diagnostic Scan Animation State -->
+                <div id="scanning-loader" class="card loader-card hidden">
+                    <div class="spinner-container">
+                        <div class="double-spinner"></div>
+                        <i class="fa-solid fa-seedling loader-center-icon"></i>
+                    </div>
+                    <h3 data-lang="scanning_h3">Scanning Crop Features...</h3>
+                    <p data-lang="scanning_p">AI is comparing color patterns, lesions, and leaf details against our agronomy database.</p>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="scan-progress"></div>
+                    </div>
+                </div>
+
+                <!-- Results Dashboard Container -->
+                <div id="results-dashboard" class="dashboard-container hidden">
+                    <!-- Dashboard Header -->
+                    <div class="card results-header-card">
+                        <div class="diagnosed-header">
+                            <div class="diagnosed-badge" id="crop-badge-name">TOMATO</div>
+                            <div class="severity-pill severity-high" id="severity-indicator">
+                                <i class="fa-solid fa-triangle-exclamation"></i> <span id="severity-text" data-lang="severity_high">High Severity</span>
+                            </div>
+                        </div>
+                        <h2 id="diagnosed-disease-title" class="disease-title">Late Blight Disease (Phytophthora infestans)</h2>
+                        <div class="speak-btn-wrapper">
+                            <button id="btn-speak-result" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-volume-high"></i> <span data-lang="read_aloud_btn">Listen to Diagnosis</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Tabs -->
+                    <div class="dashboard-tabs">
+                        <button class="tab-btn active" data-tab="tab-diagnosis">
+                            <i class="fa-solid fa-notes-medical"></i> <span data-lang="tab_diagnosis">Diagnosis & Remedy</span>
+                        </button>
+                        <button class="tab-btn" data-tab="tab-schedule">
+                            <i class="fa-solid fa-calendar-days"></i> <span data-lang="tab_schedule">Treatment Schedule</span>
+                        </button>
+                        <button class="tab-btn" data-tab="tab-shops">
+                            <i class="fa-solid fa-map-location-dot"></i> <span data-lang="tab_shops">Nearby Dealers</span>
+                        </button>
+                    </div>
+
+                    <!-- Tab Content 1: Diagnosis & Remedy -->
+                    <div id="tab-diagnosis" class="tab-content active">
+                        <!-- Disease Description Card -->
+                        <div class="card sub-card">
+                            <h3 class="sub-card-title"><i class="fa-solid fa-circle-info"></i> <span data-lang="disease_info_header">Disease Analysis</span></h3>
+                            <p id="disease-description" class="disease-description-text">Tomato late blight is a serious fungal disease that causes rapid rotting of leaves, stems, and fruits. It thrives in cool, wet environments and can destroy entire fields within days if untreated.</p>
+                        </div>
+
+                        <!-- Remedies Side-by-Side Grid -->
+                        <div class="remedy-grid">
+                            <!-- Organic Remedies -->
+                            <div class="card sub-card remedy-card organic-remedy">
+                                <h3 class="sub-card-title remedy-header"><i class="fa-solid fa-hand-holding-hand"></i> <span data-lang="organic_remedy_title">Organic Remedy (இயற்கை தீர்வு)</span></h3>
+                                <ul id="organic-remedies-list" class="remedy-list">
+                                    <li>Spray neem oil emulsion (5ml per liter of water) thoroughly.</li>
+                                    <li>Use copper oxychloride spray as a soil drench to restrict spore development.</li>
+                                    <li>Remove and safely burn infected plants immediately.</li>
+                                </ul>
+                            </div>
+                            <!-- Chemical Remedies & Fertilizer -->
+                            <div class="card sub-card remedy-card chemical-remedy">
+                                <h3 class="sub-card-title remedy-header"><i class="fa-solid fa-flask"></i> <span data-lang="chemical_remedy_title">Chemical & Fertilizer (செயற்கை தீர்வு / உரம்)</span></h3>
+                                <ul id="chemical-remedies-list" class="remedy-list">
+                                    <li>Apply Metalaxyl or Mancozeb fungicide spray (2g per liter).</li>
+                                    <li>Add Potash-rich fertilizers (NPK 0-0-50) to boost crop immunity.</li>
+                                    <li>Avoid excessive nitrogen-based fertilizers during outbreaks.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab Content 2: Treatment Schedule -->
+                    <div id="tab-schedule" class="tab-content">
+                        <!-- Custom Reminder Planner Form -->
+                        <div class="card sub-card scheduler-form-card">
+                            <h3 class="sub-card-title"><i class="fa-solid fa-calendar-plus"></i> <span data-lang="schedule_creator_title">Create Custom Treatment Reminder</span></h3>
+                            <form id="scheduler-form" class="schedule-inputs-grid">
+                                <div class="form-group">
+                                    <label for="sched-type" data-lang="label_treatment_type">Treatment Type</label>
+                                    <select id="sched-type" required>
+                                        <option value="Fungicide Spray" data-lang="opt_fungicide">Fungicide Spray / மருந்து தெளிப்பு</option>
+                                        <option value="Organic Neem Spray" data-lang="opt_neem">Organic Neem Spray / வேப்பெண்ணெய் தெளிப்பு</option>
+                                        <option value="Fertilizer Application" data-lang="opt_fertilizer">Fertilizer Application / உரம் போடுதல்</option>
+                                        <option value="Pruning / Clean up" data-lang="opt_cleanup">Pruning & Cleanup / கழிவுகளை அகற்றுதல்</option>
+                                        <option value="Watering" data-lang="opt_watering">Irrigation / நீர்ப்பாசனம்</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="sched-date" data-lang="label_start_date">Scheduled Date & Time</label>
+                                    <input type="datetime-local" id="sched-date" required>
+                                </div>
+                                <div class="form-group btn-align-bottom">
+                                    <button type="submit" class="btn btn-success btn-full">
+                                        <i class="fa-solid fa-plus"></i> <span data-lang="btn_add_schedule">Add Reminder</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Schedule Timeline List -->
+                        <div class="card sub-card">
+                            <h3 class="sub-card-title"><i class="fa-solid fa-timeline"></i> <span data-lang="timeline_header">Recommended Recovery Timeline</span></h3>
+                            
+                            <!-- Static Suggested Timeline -->
+                            <div class="timeline-visual" id="timeline-suggested-steps">
+                                <!-- Day 1 -->
+                                <div class="timeline-item">
+                                    <div class="timeline-dot dot-active">1</div>
+                                    <div class="timeline-info">
+                                        <h4 class="timeline-step-title"><span data-lang="timeline_day">Day</span> 1: <span data-lang="step1_title">Isolate & Spray</span></h4>
+                                        <p class="timeline-step-desc" data-lang="step1_desc">Cut infected leaves immediately. Spray organic copper fungicide or Mancozeb in late afternoon.</p>
+                                    </div>
+                                </div>
+                                <!-- Day 3 -->
+                                <div class="timeline-item">
+                                    <div class="timeline-dot dot-active">3</div>
+                                    <div class="timeline-info">
+                                        <h4 class="timeline-step-title"><span data-lang="timeline_day">Day</span> 3: <span data-lang="step2_title">Soil Immunity</span></h4>
+                                        <p class="timeline-step-desc" data-lang="step2_desc">Apply NPK (Potassium rich) fertilizer to roots. Limit overhead watering to reduce wetness.</p>
+                                    </div>
+                                </div>
+                                <!-- Day 7 -->
+                                <div class="timeline-item">
+                                    <div class="timeline-dot">7</div>
+                                    <div class="timeline-info">
+                                        <h4 class="timeline-step-title"><span data-lang="timeline_day">Day</span> 7: <span data-lang="step3_title">Second Application</span></h4>
+                                        <p class="timeline-step-desc" data-lang="step3_desc">Apply neem oil spray as a preventative shield on healthy foliage. Check stems for spreading lesions.</p>
+                                    </div>
+                                </div>
+                                <!-- Day 14 -->
+                                <div class="timeline-item">
+                                    <div class="timeline-dot">14</div>
+                                    <div class="timeline-info">
+                                        <h4 class="timeline-step-title"><span data-lang="timeline_day">Day</span> 14: <span data-lang="step4_title">Evaluate Recovery</span></h4>
+                                        <p class="timeline-step-desc" data-lang="step4_desc">Inspect new sprouts. If disease halts, resume standard growth fertilizers.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Farmer Custom Reminders Section -->
+                            <div class="custom-reminders-wrapper">
+                                <h4 class="custom-reminders-title">
+                                    <i class="fa-solid fa-bell icon-gold"></i> <span data-lang="custom_reminders_title">Your Active Reminders</span>
+                                </h4>
+                                <div id="custom-reminders-list" class="reminders-list-container">
+                                    <!-- Dynamic Reminders inserted here -->
+                                    <p class="no-reminders-text" data-lang="no_reminders">No custom reminders added yet. Create one above!</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab Content 3: Nearby Dealers -->
+                    <div id="tab-shops" class="tab-content">
+                        <!-- Location Helper Banner -->
+                        <div class="card sub-card location-helper-card">
+                            <div class="location-flex">
+                                <div class="location-desc">
+                                    <h3 class="location-heading" data-lang="location_header">Dealers Selling Prescribed Fertilizers & Remedies</h3>
+                                    <p data-lang="location_desc">Interactive maps & address coordinates of agriculture cooperative stores and pesticide dealers nearby.</p>
+                                </div>
+                                <div class="location-selector-wrap">
+                                    <label for="region-select" data-lang="select_region_label">Select Area:</label>
+                                    <select id="region-select">
+                                        <option value="coimbatore">Coimbatore (கோயம்புத்தூர்)</option>
+                                        <option value="trichy">Trichy (திருச்சிராப்பள்ளி)</option>
+                                        <option value="madurai">Madurai (மதுரை)</option>
+                                        <option value="salem">Salem (சேலம்)</option>
+                                        <option value="thanjavur">Thanjavur (தஞ்சாவூர்)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Map + List Split Grid -->
+                        <div class="shop-split-grid">
+                            <!-- Shop List -->
+                            <div class="shop-list-panel" id="shop-list-container">
+                                <!-- Dynamic shop lists inserted by app.js -->
+                            </div>
+                            <!-- Map Container -->
+                            <div class="map-wrapper card">
+                                <div id="dealer-map" style="height: 380px; width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- App Footer -->
+    <footer class="app-footer">
+        <div class="footer-container">
+            <p>&copy; 2026 AgriSense AI. <span data-lang="footer_credit">Helping farmers secure a greener tomorrow.</span></p>
+            <div class="footer-contacts">
+                <span data-lang="footer_support"><i class="fa-solid fa-headset"></i> Agri Helpline: 1800-180-1551</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- App Script -->
+    <script src="app.js"></script>
+</body>
+</html>
