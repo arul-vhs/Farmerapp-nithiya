@@ -375,6 +375,14 @@ const cropDiseaseDatabase = {
 
 // 3. Fertilizer Dealer Stores Database
 const dealerStores = {
+    pudukkottai: {
+        center: [10.3797, 78.8219],
+        shops: [
+            { name: { en: "Pudukkottai Farmers Cooperative Society", ta: "புதுக்கோட்டை விவசாயிகள் கூட்டுறவு சங்கம்" }, address: { en: "88, Alangudi Road, Pudukkottai", ta: "88, ஆலங்குடி சாலை, புதுக்கோட்டை" }, phone: "04322-221234", dist: 1.0, coords: [10.3850, 78.8280] },
+            { name: { en: "Valarmathi Agro Agency", ta: "வளர்மதி அக்ரோ ஏஜென்சி" }, address: { en: "142, West Main Street, Pudukkottai", ta: "142, மேற்கு முக்கிய வீதி, புதுக்கோட்டை" }, phone: "94434-56789", dist: 1.5, coords: [10.3770, 78.8180] },
+            { name: { en: "Sri Amman Agricultural Depot", ta: "ஸ்ரீ அம்மன் அக்ரோ டிப்போ" }, address: { en: "Trichy Road Bypass, Pudukkottai", ta: "திருச்சி ரோடு பைபாஸ், புதுக்கோட்டை" }, phone: "98422-65432", dist: 3.2, coords: [10.3950, 78.8110] }
+        ]
+    },
     coimbatore: {
         center: [11.0168, 76.9558],
         shops: [
@@ -419,11 +427,11 @@ const dealerStores = {
 
 // Mock crop sample image placeholders
 const cropSampleImages = {
-    tomato: "https://images.unsplash.com/photo-1592417817098-8f3d6eb19675?auto=format&fit=crop&q=80&w=600",
-    paddy: "https://images.unsplash.com/photo-1536657244441-c12402b9f0da?auto=format&fit=crop&q=80&w=600",
-    corn: "https://images.unsplash.com/photo-1551754625-70c90487530d?auto=format&fit=crop&q=80&w=600",
-    banana: "https://images.unsplash.com/photo-1566393028639-d108a42c46a7?auto=format&fit=crop&q=80&w=600",
-    coconut: "https://images.unsplash.com/photo-1543158266-0066955047b1?auto=format&fit=crop&q=80&w=600"
+    tomato: "images/tomato.png",
+    paddy: "images/paddy.png",
+    corn: "images/corn.png",
+    banana: "images/banana.png",
+    coconut: "images/coconut.png"
 };
 
 // 4. Initializer Logic
@@ -431,7 +439,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initElements();
     loadLanguage(currentLang);
     loadSavedReminders();
-    initMap('coimbatore'); // Initialize map default to coimbatore
+    initMap('pudukkottai'); // Initialize map default to pudukkottai
     updateAPIKeyStatus();
 });
 

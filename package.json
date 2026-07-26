@@ -1,0 +1,27 @@
+{
+  "name": "nithiya",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "build": "powershell -Command \"Copy-Item index.html, style.css, app.js -Destination www -Force; Copy-Item images -Destination www -Recurse -Force\"",
+    "sync": "npm run build && npx cap sync",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arul-vhs/Farmerapp-nithiya.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/arul-vhs/Farmerapp-nithiya/issues"
+  },
+  "homepage": "https://github.com/arul-vhs/Farmerapp-nithiya#readme",
+  "description": "",
+  "dependencies": {
+    "@capacitor/android": "^8.4.2",
+    "@capacitor/cli": "^8.4.2",
+    "@capacitor/core": "^8.4.2"
+  }
+}
