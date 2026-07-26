@@ -11,6 +11,7 @@ let mapMarkers = [];
 let speechSynth = window.speechSynthesis;
 let speechUtterance = null;
 let customReminders = [];
+let geminiApiKey = localStorage.getItem("agrisense_gemini_key") || "";
 
 // 1. Bilingual UI Elements Translation Dictionary
 const translations = {
@@ -74,7 +75,15 @@ const translations = {
         footer_credit: "Helping farmers secure a greener tomorrow.",
         footer_support: "Agri Helpline: 1800-180-1551",
         dist_km: "km away",
-        call_btn: "Call Dealer"
+        call_btn: "Call Dealer",
+        status_sim: "Offline Simulation",
+        status_active: "AI Active",
+        settings_modal_title: "Gemini AI Settings",
+        settings_help_text: "Enter your Google Gemini API Key to enable real-time diagnostic scanning of any crop photo. Your key is saved locally in your browser.",
+        settings_api_label: "Gemini API Key",
+        current_mode_label: "Status:",
+        btn_clear_key: "Clear Key",
+        btn_save_key: "Save Settings"
     },
     ta: {
         title: "அக்ரிசென்ஸ் AI",
@@ -136,7 +145,15 @@ const translations = {
         footer_credit: "விவசாயிகளின் வளமான எதிர்காலத்திற்கு தொழில்நுட்பத்தின் உதவி.",
         footer_support: "விவசாய உதவி எண்: 1800-180-1551",
         dist_km: "கி.மீ தூரம்",
-        call_btn: "அழைக்க"
+        call_btn: "அழைக்க",
+        status_sim: "ஆஃப்லைன் மாதிரி",
+        status_active: "AI இயங்குகிறது",
+        settings_modal_title: "செயற்கை நுண்ணறிவு அமைப்புகள்",
+        settings_help_text: "எந்தவொரு பயிர் புகைப்படத்தையும் நேரலையில் ஆராய உங்கள் கூகுள் ஜெமினி API சாவியை உள்ளிடவும். இந்த சாவி பாதுகாப்பாக பிரவுசரிலேயே சேமிக்கப்படும்.",
+        settings_api_label: "ஜெமினி API சாவி",
+        current_mode_label: "நிலை:",
+        btn_clear_key: "சாவியை நீக்கு",
+        btn_save_key: "அமைப்புகளைச் சேமி"
     }
 };
 
@@ -415,6 +432,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadLanguage(currentLang);
     loadSavedReminders();
     initMap('coimbatore'); // Initialize map default to coimbatore
+    updateAPIKeyStatus();
 });
 
 // Cache elements
@@ -451,7 +469,16 @@ function initElements() {
         timelineSuggestedSteps: document.getElementById("timeline-suggested-steps"),
         sampleButtons: document.querySelectorAll(".sample-btn"),
         tabButtons: document.querySelectorAll(".tab-btn"),
-        tabContents: document.querySelectorAll(".tab-content")
+        tabContents: document.querySelectorAll(".tab-content"),
+        settingsModal: document.getElementById("settings-modal"),
+        btnSettings: document.getElementById("btn-settings"),
+        btnCloseSettings: document.getElementById("btn-close-settings"),
+        apiKeyInput: document.getElementById("api-key-input"),
+        btnToggleKeyVisibility: document.getElementById("btn-toggle-key-visibility"),
+        btnSaveKey: document.getElementById("btn-save-key"),
+        btnClearKey: document.getElementById("btn-clear-key"),
+        apiStatusBadge: document.getElementById("api-status-badge"),
+        settingsStatusBadge: document.getElementById("settings-status-badge")
     };
 
     // Event Listeners
@@ -515,6 +542,18 @@ function initElements() {
     elements.regionSelect.addEventListener("change", (e) => {
         const region = e.target.value;
         updateDealerSection(region);
+    });
+
+    // AI Settings Event Listeners
+    elements.btnSettings.addEventListener("click", openSettingsModal);
+    elements.btnCloseSettings.addEventListener("click", closeSettingsModal);
+    elements.btnSaveKey.addEventListener("click", saveAPIKey);
+    elements.btnClearKey.addEventListener("click", clearAPIKey);
+    elements.btnToggleKeyVisibility.addEventListener("click", toggleKeyVisibility);
+    window.addEventListener("click", (e) => {
+        if (e.target === elements.settingsModal) {
+            closeSettingsModal();
+        }
     });
 }
 
@@ -630,6 +669,12 @@ function loadSampleCrop(cropType) {
 
 // 7. Mock Scanning Simulator
 function triggerMockAnalysis() {
+    // Check if we should use the live Gemini AI model
+    if (geminiApiKey) {
+        analyzeWithGeminiAPI();
+        return;
+    }
+
     const targetCropKey = elements.btnAnalyze.getAttribute("data-target-crop");
     if (!targetCropKey) return;
     
@@ -998,4 +1043,266 @@ function updateDealerSection(regionKey) {
             mapMarkers.push(marker);
         }
     });
+}
+
+// 11. Live AI Integration (Gemini Multimodal Connection & Settings Panel)
+function openSettingsModal() {
+    elements.apiKeyInput.value = geminiApiKey;
+    elements.settingsModal.classList.remove("hidden");
+    updateAPIKeyStatus();
+}
+
+function closeSettingsModal() {
+    elements.settingsModal.classList.add("hidden");
+}
+
+function toggleKeyVisibility() {
+    const isPassword = elements.apiKeyInput.type === "password";
+    elements.apiKeyInput.type = isPassword ? "text" : "password";
+    const icon = elements.btnToggleKeyVisibility.querySelector("i");
+    if (icon) {
+        icon.className = isPassword ? "fa-solid fa-eye-slash" : "fa-solid fa-eye";
+    }
+}
+
+function saveAPIKey() {
+    const key = elements.apiKeyInput.value.trim();
+    if (!key) {
+        alert(currentLang === 'ta' ? "தயவுசெய்து சரியான சாவியை உள்ளிடவும்!" : "Please enter a valid API key!");
+        return;
+    }
+    geminiApiKey = key;
+    localStorage.setItem("agrisense_gemini_key", key);
+    updateAPIKeyStatus();
+    closeSettingsModal();
+}
+
+function clearAPIKey() {
+    geminiApiKey = "";
+    localStorage.removeItem("agrisense_gemini_key");
+    elements.apiKeyInput.value = "";
+    updateAPIKeyStatus();
+    closeSettingsModal();
+}
+
+function updateAPIKeyStatus() {
+    const activeText = translations[currentLang].status_active;
+    const simText = translations[currentLang].status_sim;
+    
+    if (geminiApiKey) {
+        elements.apiStatusBadge.className = "api-badge badge-active";
+        elements.apiStatusBadge.innerHTML = `<i class="fa-solid fa-brain"></i> <span>${activeText}</span>`;
+        if (elements.settingsStatusBadge) {
+            elements.settingsStatusBadge.className = "api-badge badge-active";
+            elements.settingsStatusBadge.innerHTML = `<span>${activeText}</span>`;
+        }
+    } else {
+        elements.apiStatusBadge.className = "api-badge badge-sim";
+        elements.apiStatusBadge.innerHTML = `<i class="fa-solid fa-circle-dot"></i> <span>${simText}</span>`;
+        if (elements.settingsStatusBadge) {
+            elements.settingsStatusBadge.className = "api-badge badge-sim";
+            elements.settingsStatusBadge.innerHTML = `<span>${simText}</span>`;
+        }
+    }
+}
+
+async function analyzeWithGeminiAPI() {
+    elements.resultsPlaceholder.classList.add("hidden");
+    elements.resultsDashboard.classList.add("hidden");
+    elements.scanningLoader.classList.remove("hidden");
+    elements.dropZone.classList.add("scanning");
+    
+    let progress = 0;
+    elements.scanProgress.style.width = `0%`;
+    const progressInterval = setInterval(() => {
+        if (progress < 90) {
+            progress += 3;
+            elements.scanProgress.style.width = `${progress}%`;
+        }
+    }, 100);
+
+    try {
+        let base64Image = "";
+        let mimeType = "image/jpeg";
+
+        if (uploadedImageSrc) {
+            if (uploadedImageSrc.startsWith("data:")) {
+                const parts = uploadedImageSrc.split(",");
+                base64Image = parts[1];
+                const match = parts[0].match(/data:(.*?);/);
+                if (match) mimeType = match[1];
+            } else {
+                base64Image = await urlToBase64(uploadedImageSrc);
+            }
+        } else {
+            const targetCropKey = elements.btnAnalyze.getAttribute("data-target-crop");
+            if (targetCropKey && cropSampleImages[targetCropKey]) {
+                base64Image = await urlToBase64(cropSampleImages[targetCropKey]);
+            } else {
+                throw new Error("No image source found.");
+            }
+        }
+
+        const prompt = `You are an expert agricultural botanist and plant pathologist. 
+Analyze this crop image and identify the crop type and any diseases or health issues. 
+If the crop is healthy, diagnose it as healthy (severity: low).
+Provide detailed descriptions, organic treatments, chemical treatments (with fertilizer names/dosages), and a recovery schedule.
+
+You MUST respond ONLY with a valid JSON object matching the following structure. 
+Do NOT enclose the JSON in markdown code blocks (e.g. do not write \`\`\`json ... \`\`\`), and do not output any other text:
+{
+  "badge": {
+    "en": "UPPERCASE CROP NAME (e.g. TOMATO)",
+    "ta": "உயர்தர தமிழ் பயிர் பெயர் (எ.கா. தக்காளி)"
+  },
+  "severity": "high", // must be exactly "high", "medium", or "low"
+  "title": {
+    "en": "Disease Name in English (e.g. Late Blight)",
+    "ta": "நோய் பெயர் தமிழில் (எ.கா. இலை கருகல் நோய்)"
+  },
+  "description": {
+    "en": "Detailed description of the disease, causes, and impacts in English.",
+    "ta": "நோயின் விவரம், காரணம் மற்றும் விளைவுகள் பற்றிய விரிவான தமிழ் விளக்கம்."
+  },
+  "organicRemedies": {
+    "en": [
+      "Organic remedy 1 in English",
+      "Organic remedy 2 in English",
+      "Organic remedy 3 in English"
+    ],
+    "ta": [
+      "இயற்கை தீர்வு 1 தமிழில்",
+      "இயற்கை தீர்வு 2 தமிழில்",
+      "இயற்கை தீர்வு 3 தமிழில்"
+    ]
+  },
+  "chemicalRemedies": {
+    "en": [
+      "Chemical pesticide or fertilizer remedy 1 in English",
+      "Chemical pesticide or fertilizer remedy 2 in English",
+      "Chemical pesticide or fertilizer remedy 3 in English"
+    ],
+    "ta": [
+      "செயற்கை மருந்து அல்லது உரம் 1 தமிழில்",
+      "செயற்கை மருந்து அல்லது உரம் 2 தமிழில்",
+      "செயற்கை மருந்து அல்லது உரம் 3 தமிழில்"
+    ]
+  },
+  "timeline": [
+    {
+      "day": 1,
+      "title": { "en": "Step 1 Title English", "ta": "படி 1 தலைப்பு தமிழ்" },
+      "desc": { "en": "Step 1 Action Description English", "ta": "படி 1 செயல் விளக்கம் தமிழ்" }
+    },
+    {
+      "day": 3,
+      "title": { "en": "Step 2 Title English", "ta": "படி 2 தலைப்பு தமிழ்" },
+      "desc": { "en": "Step 2 Action Description English", "ta": "படி 2 செயல் விளக்கம் தமிழ்" }
+    },
+    {
+      "day": 7,
+      "title": { "en": "Step 3 Title English", "ta": "படி 3 தலைப்பு தமிழ்" },
+      "desc": { "en": "Step 3 Action Description English", "ta": "படி 3 செயல் விளக்கம் தமிழ்" }
+    },
+    {
+      "day": 14,
+      "title": { "en": "Step 4 Title English", "ta": "படி 4 தலைப்பு தமிழ்" },
+      "desc": { "en": "Step 4 Action Description English", "ta": "படி 4 செயல் விளக்கம் தமிழ்" }
+    }
+  ]
+}`;
+
+        const apiURL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+        const payload = {
+            contents: [
+                {
+                    parts: [
+                        { text: prompt },
+                        {
+                            inlineData: {
+                                mimeType: mimeType,
+                                data: base64Image
+                            }
+                        }
+                    ]
+                }
+            ],
+            generationConfig: {
+                responseMimeType: "application/json"
+            }
+        };
+
+        const response = await fetch(apiURL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const responseData = await response.json();
+        const candidateText = responseData.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!candidateText) {
+            throw new Error("No analysis text returned from Gemini AI.");
+        }
+
+        const parsedResult = JSON.parse(candidateText.trim());
+
+        clearInterval(progressInterval);
+        elements.scanProgress.style.width = "100%";
+
+        setTimeout(() => {
+            elements.scanningLoader.classList.add("hidden");
+            elements.resultsDashboard.classList.remove("hidden");
+            elements.dropZone.classList.remove("scanning");
+
+            currentCropData = parsedResult;
+            displayCropResults(currentCropData);
+            switchTab('tab-diagnosis');
+            speakDiagnosisResult();
+        }, 300);
+
+    } catch (error) {
+        clearInterval(progressInterval);
+        elements.scanningLoader.classList.add("hidden");
+        elements.dropZone.classList.remove("scanning");
+        
+        console.error("Gemini API Error:", error);
+        
+        const isTamil = currentLang === 'ta';
+        const errorMsg = isTamil 
+            ? `AI ஆல் படத்தை பரிசோதிக்க முடியவில்லை! உங்களது API சாவி தவறாக இருக்கலாம் அல்லது இணைய இணைப்பில் கோளாறு இருக்கலாம். \n\nஆஃப்லைன் மாதிரியைப் பயன்படுத்த விரும்புகிறீர்களா?` 
+            : `AI could not analyze the image! Your API Key might be invalid or there is a network issue. \n\nWould you like to run the Offline Simulation instead?`;
+        
+        if (confirm(errorMsg)) {
+            geminiApiKey = "";
+            triggerMockAnalysis();
+            geminiApiKey = localStorage.getItem("agrisense_gemini_key") || "";
+        } else {
+            elements.resultsPlaceholder.classList.remove("hidden");
+        }
+    }
+}
+
+async function urlToBase64(url) {
+    try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const parts = reader.result.split(",");
+                resolve(parts[1]);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    } catch (e) {
+        console.error("Base64 conversion failed, returning mock empty image data", e);
+        return "";
+    }
 }
