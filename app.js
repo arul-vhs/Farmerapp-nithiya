@@ -1212,7 +1212,7 @@ Do NOT enclose the JSON in markdown code blocks (e.g. do not write \`\`\`json ..
   ]
 }`;
 
-        const apiURL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+        let apiURL = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
         const payload = {
             contents: [
                 {
@@ -1232,13 +1232,26 @@ Do NOT enclose the JSON in markdown code blocks (e.g. do not write \`\`\`json ..
             }
         };
 
-        const response = await fetch(apiURL, {
+        let response = await fetch(apiURL, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify(payload)
         });
+
+        // Fallback: If production stable v1 endpoint fails, retry with v1beta
+        if (!response.ok) {
+            console.warn(`Primary v1 endpoint failed with status ${response.status}. Retrying with v1beta...`);
+            const betaURL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+            response = await fetch(betaURL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+        }
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
