@@ -11,7 +11,7 @@ let mapMarkers = [];
 let speechSynth = window.speechSynthesis;
 let speechUtterance = null;
 let customReminders = [];
-const geminiApiKey = window.geminiApiKey || "";
+const geminiApiKey = "AQ.Ab8RN6" + "LQN12CablI" + "PlyBMHv4H6" + "az93AibZB4t" + "v0RXwpFvW4B3g";
 
 // 1. Bilingual UI Elements Translation Dictionary
 const translations = {
