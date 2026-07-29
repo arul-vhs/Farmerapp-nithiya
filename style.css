@@ -739,6 +739,24 @@ body {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
+@media (max-width: 576px) {
+    .dashboard-tabs {
+        overflow-x: auto;
+        white-space: nowrap;
+        display: flex;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .dashboard-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    .tab-btn {
+        flex: 0 0 auto;
+        padding: 0.65rem 1rem;
+    }
+}
+
 /* Tab Content Visibility */
 .tab-content {
     display: none;
