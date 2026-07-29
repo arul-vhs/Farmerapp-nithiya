@@ -1155,7 +1155,7 @@ Do NOT enclose the JSON in markdown code blocks (e.g. do not write \`\`\`json ..
   ]
 }`;
 
-        let apiURL = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+        let apiURL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${geminiApiKey}`;
         const payload = {
             contents: [
                 {
@@ -1186,7 +1186,7 @@ Do NOT enclose the JSON in markdown code blocks (e.g. do not write \`\`\`json ..
         // Fallback: If production stable v1 endpoint fails, retry with v1beta
         if (!response.ok) {
             console.warn(`Primary v1 endpoint failed with status ${response.status}. Retrying with v1beta...`);
-            const betaURL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+            const betaURL = `https://generativelanguage.googleapis.com/v1/models/gemini-3.5-flash:generateContent?key=${geminiApiKey}`;
             response = await fetch(betaURL, {
                 method: "POST",
                 headers: {
