@@ -1183,10 +1183,10 @@ Do NOT enclose the JSON in markdown code blocks (e.g. do not write \`\`\`json ..
             body: JSON.stringify(payload)
         });
 
-        // Fallback: If production stable v1 endpoint fails, retry with v1beta
+        // Fallback: If primary gemini-3.5-flash fails (e.g. 503 high demand), fallback to stable gemini-2.5-flash
         if (!response.ok) {
-            console.warn(`Primary v1 endpoint failed with status ${response.status}. Retrying with v1beta...`);
-            const betaURL = `https://generativelanguage.googleapis.com/v1/models/gemini-3.5-flash:generateContent?key=${geminiApiKey}`;
+            console.warn(`Primary 3.5 endpoint failed with status ${response.status}. Retrying with stable 2.5...`);
+            const betaURL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
             response = await fetch(betaURL, {
                 method: "POST",
                 headers: {
