@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
-    "build": "powershell -Command \"Copy-Item index.html, style.css, app.js -Destination www -Force; Copy-Item images -Destination www -Recurse -Force\"",
+    "build": "powershell -Command \"Copy-Item index.html, style.css, app.js, config.js -Destination www -Force; Copy-Item images -Destination www -Recurse -Force\"",
     "sync": "npm run build && npx cap sync",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

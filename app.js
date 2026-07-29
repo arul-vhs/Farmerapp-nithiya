@@ -11,7 +11,7 @@ let mapMarkers = [];
 let speechSynth = window.speechSynthesis;
 let speechUtterance = null;
 let customReminders = [];
-let geminiApiKey = localStorage.getItem("agrisense_gemini_key") || "";
+const geminiApiKey = window.geminiApiKey || "";
 
 // 1. Bilingual UI Elements Translation Dictionary
 const translations = {
@@ -478,15 +478,7 @@ function initElements() {
         sampleButtons: document.querySelectorAll(".sample-btn"),
         tabButtons: document.querySelectorAll(".tab-btn"),
         tabContents: document.querySelectorAll(".tab-content"),
-        settingsModal: document.getElementById("settings-modal"),
-        btnSettings: document.getElementById("btn-settings"),
-        btnCloseSettings: document.getElementById("btn-close-settings"),
-        apiKeyInput: document.getElementById("api-key-input"),
-        btnToggleKeyVisibility: document.getElementById("btn-toggle-key-visibility"),
-        btnSaveKey: document.getElementById("btn-save-key"),
-        btnClearKey: document.getElementById("btn-clear-key"),
-        apiStatusBadge: document.getElementById("api-status-badge"),
-        settingsStatusBadge: document.getElementById("settings-status-badge")
+        apiStatusBadge: document.getElementById("api-status-badge")
     };
 
     // Event Listeners
@@ -550,18 +542,6 @@ function initElements() {
     elements.regionSelect.addEventListener("change", (e) => {
         const region = e.target.value;
         updateDealerSection(region);
-    });
-
-    // AI Settings Event Listeners
-    elements.btnSettings.addEventListener("click", openSettingsModal);
-    elements.btnCloseSettings.addEventListener("click", closeSettingsModal);
-    elements.btnSaveKey.addEventListener("click", saveAPIKey);
-    elements.btnClearKey.addEventListener("click", clearAPIKey);
-    elements.btnToggleKeyVisibility.addEventListener("click", toggleKeyVisibility);
-    window.addEventListener("click", (e) => {
-        if (e.target === elements.settingsModal) {
-            closeSettingsModal();
-        }
     });
 }
 
@@ -675,10 +655,12 @@ function loadSampleCrop(cropType) {
     triggerMockAnalysis();
 }
 
+let useLiveAI = true;
+
 // 7. Mock Scanning Simulator
 function triggerMockAnalysis() {
     // Check if we should use the live Gemini AI model
-    if (geminiApiKey) {
+    if (geminiApiKey && useLiveAI) {
         analyzeWithGeminiAPI();
         return;
     }
@@ -1053,46 +1035,7 @@ function updateDealerSection(regionKey) {
     });
 }
 
-// 11. Live AI Integration (Gemini Multimodal Connection & Settings Panel)
-function openSettingsModal() {
-    elements.apiKeyInput.value = geminiApiKey;
-    elements.settingsModal.classList.remove("hidden");
-    updateAPIKeyStatus();
-}
-
-function closeSettingsModal() {
-    elements.settingsModal.classList.add("hidden");
-}
-
-function toggleKeyVisibility() {
-    const isPassword = elements.apiKeyInput.type === "password";
-    elements.apiKeyInput.type = isPassword ? "text" : "password";
-    const icon = elements.btnToggleKeyVisibility.querySelector("i");
-    if (icon) {
-        icon.className = isPassword ? "fa-solid fa-eye-slash" : "fa-solid fa-eye";
-    }
-}
-
-function saveAPIKey() {
-    const key = elements.apiKeyInput.value.trim();
-    if (!key) {
-        alert(currentLang === 'ta' ? "தயவுசெய்து சரியான சாவியை உள்ளிடவும்!" : "Please enter a valid API key!");
-        return;
-    }
-    geminiApiKey = key;
-    localStorage.setItem("agrisense_gemini_key", key);
-    updateAPIKeyStatus();
-    closeSettingsModal();
-}
-
-function clearAPIKey() {
-    geminiApiKey = "";
-    localStorage.removeItem("agrisense_gemini_key");
-    elements.apiKeyInput.value = "";
-    updateAPIKeyStatus();
-    closeSettingsModal();
-}
-
+// 11. Live AI Integration (Gemini Multimodal Connection)
 function updateAPIKeyStatus() {
     const activeText = translations[currentLang].status_active;
     const simText = translations[currentLang].status_sim;
@@ -1100,17 +1043,9 @@ function updateAPIKeyStatus() {
     if (geminiApiKey) {
         elements.apiStatusBadge.className = "api-badge badge-active";
         elements.apiStatusBadge.innerHTML = `<i class="fa-solid fa-brain"></i> <span>${activeText}</span>`;
-        if (elements.settingsStatusBadge) {
-            elements.settingsStatusBadge.className = "api-badge badge-active";
-            elements.settingsStatusBadge.innerHTML = `<span>${activeText}</span>`;
-        }
     } else {
         elements.apiStatusBadge.className = "api-badge badge-sim";
         elements.apiStatusBadge.innerHTML = `<i class="fa-solid fa-circle-dot"></i> <span>${simText}</span>`;
-        if (elements.settingsStatusBadge) {
-            elements.settingsStatusBadge.className = "api-badge badge-sim";
-            elements.settingsStatusBadge.innerHTML = `<span>${simText}</span>`;
-        }
     }
 }
 
@@ -1300,16 +1235,37 @@ Do NOT enclose the JSON in markdown code blocks (e.g. do not write \`\`\`json ..
             : `AI could not analyze the image! Your API Key might be invalid or there is a network issue. \n\nWould you like to run the Offline Simulation instead?`;
         
         if (confirm(errorMsg)) {
-            geminiApiKey = "";
+            useLiveAI = false;
             triggerMockAnalysis();
-            geminiApiKey = localStorage.getItem("agrisense_gemini_key") || "";
+            useLiveAI = true;
         } else {
             elements.resultsPlaceholder.classList.remove("hidden");
         }
     }
 }
 
+function getBase64FromImageElement(imgEl) {
+    try {
+        const canvas = document.createElement("canvas");
+        canvas.width = imgEl.naturalWidth || imgEl.width || 100;
+        canvas.height = imgEl.naturalHeight || imgEl.height || 100;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(imgEl, 0, 0);
+        const dataURL = canvas.toDataURL("image/png");
+        return dataURL.split(",")[1];
+    } catch (e) {
+        console.warn("Canvas-based base64 extraction failed:", e);
+        return null;
+    }
+}
+
 async function urlToBase64(url) {
+    // Try canvas-based extraction first if elements.imagePreview is already displaying this image
+    if (elements.imagePreview && elements.imagePreview.src && (elements.imagePreview.src.includes(url) || url.includes(elements.imagePreview.src))) {
+        const base64 = getBase64FromImageElement(elements.imagePreview);
+        if (base64) return base64;
+    }
+
     try {
         const response = await fetch(url);
         const blob = await response.blob();
@@ -1323,7 +1279,8 @@ async function urlToBase64(url) {
             reader.readAsDataURL(blob);
         });
     } catch (e) {
-        console.error("Base64 conversion failed, returning mock empty image data", e);
-        return "";
+        console.error("Base64 conversion failed, returning fallback placeholder image", e);
+        // Fallback 1x1 transparent PNG
+        return "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
     }
 }

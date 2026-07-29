@@ -3,3 +3,5 @@ www/
 android/
 AgriSense-AI.apk
 *.log
+config.js
+
