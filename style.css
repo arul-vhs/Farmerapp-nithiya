@@ -45,7 +45,7 @@ body {
 }
 
 /* Typography override for Tamil */
-[lang="ta"] body, :lang(ta) {
+[lang="ta"] body {
     font-family: 'Mukta', sans-serif;
 }
 

@@ -11,7 +11,8 @@ let mapMarkers = [];
 let speechSynth = window.speechSynthesis;
 let speechUtterance = null;
 let customReminders = [];
-const geminiApiKey = "AQ.Ab8RN6" + "KgIxXJGd6e" + "NDlGgw1vA-" + "M1L-Sa2qXW" + "DdQq2VEGBg" + "DGQw";
+let geminiApiKey = localStorage.getItem("gemini_api_key") || "";
+let useLiveAI = !!geminiApiKey; // Only scan with live API if a user key is configured
 
 // 1. Bilingual UI Elements Translation Dictionary
 const translations = {
@@ -478,7 +479,15 @@ function initElements() {
         sampleButtons: document.querySelectorAll(".sample-btn"),
         tabButtons: document.querySelectorAll(".tab-btn"),
         tabContents: document.querySelectorAll(".tab-content"),
-        apiStatusBadge: document.getElementById("api-status-badge")
+        apiStatusBadge: document.getElementById("api-status-badge"),
+        btnSettings: document.getElementById("btn-settings"),
+        settingsModal: document.getElementById("settings-modal"),
+        modalClose: document.getElementById("modal-close"),
+        settingsApiKey: document.getElementById("settings-api-key"),
+        btnToggleKeyVisibility: document.getElementById("btn-toggle-key-visibility"),
+        btnSaveKey: document.getElementById("btn-save-key"),
+        btnClearKey: document.getElementById("btn-clear-key"),
+        settingsStatusBadge: document.getElementById("settings-status-badge")
     };
 
     // Event Listeners
@@ -543,6 +552,58 @@ function initElements() {
         const region = e.target.value;
         updateDealerSection(region);
     });
+
+    // Settings Modal Listeners
+    elements.btnSettings.addEventListener("click", () => {
+        elements.settingsApiKey.value = localStorage.getItem("gemini_api_key") || "";
+        elements.settingsModal.classList.remove("hidden");
+        updateAPIKeyStatus();
+    });
+    
+    elements.modalClose.addEventListener("click", () => {
+        elements.settingsModal.classList.add("hidden");
+    });
+    
+    elements.settingsModal.addEventListener("click", (e) => {
+        if (e.target === elements.settingsModal) {
+            elements.settingsModal.classList.add("hidden");
+        }
+    });
+
+    elements.btnToggleKeyVisibility.addEventListener("click", () => {
+        const type = elements.settingsApiKey.getAttribute("type") === "password" ? "text" : "password";
+        elements.settingsApiKey.setAttribute("type", type);
+        const icon = elements.btnToggleKeyVisibility.querySelector("i");
+        if (type === "password") {
+            icon.className = "fa-solid fa-eye";
+        } else {
+            icon.className = "fa-solid fa-eye-slash";
+        }
+    });
+
+    elements.btnSaveKey.addEventListener("click", () => {
+        const key = elements.settingsApiKey.value.trim();
+        if (key) {
+            localStorage.setItem("gemini_api_key", key);
+            geminiApiKey = key;
+            useLiveAI = true;
+        } else {
+            localStorage.removeItem("gemini_api_key");
+            geminiApiKey = "";
+            useLiveAI = false;
+        }
+        updateAPIKeyStatus();
+        elements.settingsModal.classList.add("hidden");
+    });
+
+    elements.btnClearKey.addEventListener("click", () => {
+        localStorage.removeItem("gemini_api_key");
+        geminiApiKey = "";
+        useLiveAI = false;
+        elements.settingsApiKey.value = "";
+        updateAPIKeyStatus();
+        elements.settingsModal.classList.add("hidden");
+    });
 }
 
 // 5. Language Translation Core Engine
@@ -573,6 +634,9 @@ function setLanguage(lang) {
     
     // Refresh shops list
     updateDealerSection(elements.regionSelect.value);
+
+    // Update API Badge translation dynamically
+    updateAPIKeyStatus();
 
     // Cancel any speaking speech
     if (speechSynth.speaking) {
@@ -620,7 +684,7 @@ function handleFileSelect() {
 function resetPhotoUpload() {
     elements.fileInput.value = "";
     uploadedImageSrc = null;
-    elements.imagePreview.src = "#";
+    elements.imagePreview.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
     elements.previewContainer.classList.add("preview-hidden");
     elements.btnAnalyze.classList.add("btn-disabled");
     elements.btnAnalyze.setAttribute("disabled", "true");
@@ -654,8 +718,6 @@ function loadSampleCrop(cropType) {
     // Automatically trigger scan for samples to make it interactive and super easy!
     triggerMockAnalysis();
 }
-
-let useLiveAI = true;
 
 // 7. Mock Scanning Simulator
 function triggerMockAnalysis() {
@@ -700,6 +762,9 @@ function triggerMockAnalysis() {
                 // Display results on tab
                 displayCropResults(currentCropData);
                 switchTab('tab-diagnosis');
+                
+                // Automatically schedule the treatment timeline and setup notifications
+                scheduleAutomaticTimeline(currentCropData);
                 
                 // Read diagnostic results to farmer automatically if they want or click
                 speakDiagnosisResult();
@@ -1219,6 +1284,7 @@ Do NOT enclose the JSON in markdown code blocks (e.g. do not write \`\`\`json ..
             currentCropData = parsedResult;
             displayCropResults(currentCropData);
             switchTab('tab-diagnosis');
+            scheduleAutomaticTimeline(currentCropData);
             speakDiagnosisResult();
         }, 300);
 
@@ -1283,4 +1349,93 @@ async function urlToBase64(url) {
         // Fallback 1x1 transparent PNG
         return "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
     }
+}
+
+// 12. Notification & Auto Scheduling Engine
+async function scheduleNotification(title, body, dateStr) {
+    const scheduledTime = new Date(dateStr);
+    
+    // Check for native Capacitor LocalNotifications
+    if (window.Capacitor && window.Capacitor.isPluginAvailable('LocalNotifications')) {
+        try {
+            const { LocalNotifications } = window.Capacitor.Plugins;
+            const perm = await LocalNotifications.requestPermissions();
+            if (perm.display === 'granted') {
+                await LocalNotifications.schedule({
+                    notifications: [
+                        {
+                            title: title,
+                            body: body,
+                            id: Math.floor(Math.random() * 100000),
+                            schedule: { at: scheduledTime }
+                        }
+                    ]
+                });
+                console.log("Notification scheduled successfully via Capacitor:", title, body, scheduledTime);
+                return;
+            }
+        } catch (e) {
+            console.error("Capacitor local notification registration failed:", e);
+        }
+    }
+    
+    // Fallback: Web Notifications API
+    if ('Notification' in window) {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            const delay = scheduledTime.getTime() - Date.now();
+            if (delay > 0) {
+                setTimeout(() => {
+                    new Notification(title, { body: body });
+                }, delay);
+                console.log(`Web notification scheduled in ${delay}ms:`, title, body);
+            }
+        }
+    }
+}
+
+function scheduleLocalNotification(reminder) {
+    const isTamil = currentLang === 'ta';
+    const title = isTamil 
+        ? `வேளாண் நினைவூட்டல்: ${reminder.crop}` 
+        : `AgriSense Reminder: ${reminder.crop}`;
+    const body = isTamil 
+        ? `சிகிச்சை: ${reminder.type}` 
+        : `Treatment: ${reminder.type}`;
+    
+    scheduleNotification(title, body, reminder.date);
+}
+
+function scheduleAutomaticTimeline(cropData) {
+    const now = new Date();
+    const lang = currentLang;
+    
+    cropData.timeline.forEach(step => {
+        // Calculate dynamic reminder date (now + step.day days)
+        const reminderDate = new Date(now.getTime() + step.day * 24 * 60 * 60 * 1000);
+        
+        // Format ISO String compatible with datetime-local
+        const year = reminderDate.getFullYear();
+        const month = String(reminderDate.getMonth() + 1).padStart(2, '0');
+        const day = String(reminderDate.getDate()).padStart(2, '0');
+        const hours = String(reminderDate.getHours()).padStart(2, '0');
+        const minutes = String(reminderDate.getMinutes()).padStart(2, '0');
+        const dateString = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+        const newReminder = {
+            id: Date.now().toString() + "_" + step.day,
+            type: step.title[lang] + " - " + step.desc[lang],
+            date: dateString,
+            crop: cropData.badge[lang]
+        };
+
+        // Avoid adding duplicate reminders for the same crop and step
+        if (!customReminders.some(r => r.type === newReminder.type && r.crop === newReminder.crop)) {
+            customReminders.push(newReminder);
+            scheduleLocalNotification(newReminder);
+        }
+    });
+    
+    saveReminders();
+    renderCustomReminders();
 }
