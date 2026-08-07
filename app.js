@@ -1219,7 +1219,15 @@ Do NOT enclose the JSON in markdown code blocks (e.g. do not write \`\`\`json ..
         }
 
         const responseData = await response.json();
-        const candidateText = responseData.candidates?.[0]?.content?.parts?.[0]?.text;
+        
+        let candidateText = "";
+        const parts = responseData.candidates?.[0]?.content?.parts;
+        if (parts && parts.length > 0) {
+            // Find the first part that is not a thought block (for Gemma 4 models), fallback to the last part
+            const textPart = parts.find(p => !p.thought) || parts[parts.length - 1];
+            candidateText = textPart?.text || "";
+        }
+        
         if (!candidateText) {
             throw new Error("No analysis text returned from Gemini AI.");
         }
