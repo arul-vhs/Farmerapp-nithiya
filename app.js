@@ -115,7 +115,7 @@ const translations = {
         read_aloud_btn: "விவரங்களை ஆடியோவில் கேட்க",
         tab_diagnosis: "நோய் & தீர்வு",
         tab_schedule: "சிகிச்சை அட்டவணை",
-        tab_shops: "அருகிலுள்ள விற்பனையாளர்கள்",
+        tab_shops: "விற்பனையாளர்கள்",
         disease_info_header: "நோய் பகுப்பாய்வு",
         organic_remedy_title: "இயற்கை தீர்வு",
         chemical_remedy_title: "செயற்கை தீர்வு / உரம்",
