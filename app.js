@@ -1054,6 +1054,40 @@ function updateAPIKeyStatus() {
     }
 }
 
+function parseGenerativeAIResponse(text) {
+    let cleaned = text.trim();
+    
+    // 1. Remove markdown code blocks if present
+    if (cleaned.startsWith("```")) {
+        const lines = cleaned.split("\n");
+        if (lines.length > 2) {
+            cleaned = lines.slice(1, -1).join("\n").trim();
+        }
+    }
+    
+    // 2. Locate first '{' and last '}' to isolate JSON from any conversational text
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+    if (start !== -1 && end !== -1 && end > start) {
+        cleaned = cleaned.substring(start, end + 1);
+    }
+    
+    // 3. Attempt to parse
+    try {
+        return JSON.parse(cleaned);
+    } catch (e) {
+        console.warn("Standard JSON parse failed, attempting regex cleanup...", e);
+    }
+    
+    // 4. Recover from common trailing comma errors
+    try {
+        let fixed = cleaned.replace(/,\s*([\]}])/g, '$1');
+        return JSON.parse(fixed);
+    } catch (e2) {
+        throw new Error("Failed to parse AI response as valid JSON: " + text);
+    }
+}
+
 async function analyzeWithGeminiAPI() {
     elements.resultsPlaceholder.classList.add("hidden");
     elements.resultsDashboard.classList.add("hidden");
@@ -1232,7 +1266,7 @@ Do NOT enclose the JSON in markdown code blocks (e.g. do not write \`\`\`json ..
             throw new Error("No analysis text returned from Gemini AI.");
         }
 
-        const parsedResult = JSON.parse(candidateText.trim());
+        const parsedResult = parseGenerativeAIResponse(candidateText);
 
         clearInterval(progressInterval);
         elements.scanProgress.style.width = "100%";
