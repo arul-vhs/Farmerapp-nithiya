@@ -1473,6 +1473,19 @@ html, body {
     #dealer-map {
         height: 260px !important;
     }
+
+    /* Speak button wrapper full width on mobile to fix layout alignment overlaps and cuts */
+    .speak-btn-wrapper {
+        justify-content: center;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+        width: 100%;
+    }
+    #btn-speak-result {
+        width: 100%;
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+    }
 }
 
 @media (max-width: 480px) {

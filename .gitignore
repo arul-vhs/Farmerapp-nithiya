@@ -2,5 +2,6 @@ node_modules/
 www/
 android/
 AgriSense-AI.apk
+AgriSense-AI.aab
 *.log
 

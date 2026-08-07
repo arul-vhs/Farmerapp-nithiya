@@ -39,10 +39,7 @@
                 <button id="btn-audio-guide" class="btn-icon" title="Listen to instructions / வழிமுறைகளைக் கேளுங்கள்">
                     <i class="fa-solid fa-volume-high"></i>
                 </button>
-                <!-- Gemini Settings -->
-                <button id="btn-settings" class="btn-icon" title="Gemini AI Settings / அமைப்புகள்">
-                    <i class="fa-solid fa-gear"></i>
-                </button>
+
                 <!-- Language Selector -->
                 <div class="lang-selector">
                     <button id="lang-en" class="lang-btn active">English</button>
@@ -343,37 +340,7 @@
 
 
 
-    <!-- Gemini API Settings Modal -->
-    <div id="settings-modal" class="modal-overlay hidden">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h3><i class="fa-solid fa-brain"></i> <span data-lang="settings_modal_title">Gemini AI Settings</span></h3>
-                <button id="modal-close" class="modal-close-btn">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p class="modal-help-text" data-lang="settings_help_text">Enter your Google Gemini API Key to enable real-time diagnostic scanning of any crop photo. Your key is saved locally in your browser.</p>
-                <div class="form-group">
-                    <label for="settings-api-key" data-lang="settings_api_label">Gemini API Key</label>
-                    <div class="api-key-input-wrapper">
-                        <input type="password" id="settings-api-key" placeholder="AIzaSy...">
-                        <button id="btn-toggle-key-visibility" class="btn-visibility-toggle">
-                            <i class="fa-solid fa-eye"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="settings-status-indicator">
-                    <span data-lang="current_mode_label">Status:</span>
-                    <span id="settings-status-badge" class="api-badge badge-sim">
-                        <i class="fa-solid fa-circle-dot"></i> <span data-lang="status_sim">Offline Simulation</span>
-                    </span>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button id="btn-clear-key" class="btn btn-secondary" data-lang="btn_clear_key">Clear Key</button>
-                <button id="btn-save-key" class="btn btn-primary" data-lang="btn_save_key">Save Settings</button>
-            </div>
-        </div>
-    </div>
+
 
     <!-- App Script -->
     <script src="app.js?v=1.0.3"></script>

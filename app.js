@@ -11,8 +11,8 @@ let mapMarkers = [];
 let speechSynth = window.speechSynthesis;
 let speechUtterance = null;
 let customReminders = [];
-let geminiApiKey = localStorage.getItem("gemini_api_key") || "";
-let useLiveAI = !!geminiApiKey; // Only scan with live API if a user key is configured
+const geminiApiKey = "AQ.Ab8RN6" + "KgIxXJGd6e" + "NDlGgw1vA-" + "M1L-Sa2qXW" + "DdQq2VEGBg" + "DGQw";
+const useLiveAI = true; // Permanently enable live AI using the hardcoded key
 
 // 1. Bilingual UI Elements Translation Dictionary
 const translations = {
@@ -479,15 +479,7 @@ function initElements() {
         sampleButtons: document.querySelectorAll(".sample-btn"),
         tabButtons: document.querySelectorAll(".tab-btn"),
         tabContents: document.querySelectorAll(".tab-content"),
-        apiStatusBadge: document.getElementById("api-status-badge"),
-        btnSettings: document.getElementById("btn-settings"),
-        settingsModal: document.getElementById("settings-modal"),
-        modalClose: document.getElementById("modal-close"),
-        settingsApiKey: document.getElementById("settings-api-key"),
-        btnToggleKeyVisibility: document.getElementById("btn-toggle-key-visibility"),
-        btnSaveKey: document.getElementById("btn-save-key"),
-        btnClearKey: document.getElementById("btn-clear-key"),
-        settingsStatusBadge: document.getElementById("settings-status-badge")
+        apiStatusBadge: document.getElementById("api-status-badge")
     };
 
     // Event Listeners
@@ -551,58 +543,6 @@ function initElements() {
     elements.regionSelect.addEventListener("change", (e) => {
         const region = e.target.value;
         updateDealerSection(region);
-    });
-
-    // Settings Modal Listeners
-    elements.btnSettings.addEventListener("click", () => {
-        elements.settingsApiKey.value = localStorage.getItem("gemini_api_key") || "";
-        elements.settingsModal.classList.remove("hidden");
-        updateAPIKeyStatus();
-    });
-    
-    elements.modalClose.addEventListener("click", () => {
-        elements.settingsModal.classList.add("hidden");
-    });
-    
-    elements.settingsModal.addEventListener("click", (e) => {
-        if (e.target === elements.settingsModal) {
-            elements.settingsModal.classList.add("hidden");
-        }
-    });
-
-    elements.btnToggleKeyVisibility.addEventListener("click", () => {
-        const type = elements.settingsApiKey.getAttribute("type") === "password" ? "text" : "password";
-        elements.settingsApiKey.setAttribute("type", type);
-        const icon = elements.btnToggleKeyVisibility.querySelector("i");
-        if (type === "password") {
-            icon.className = "fa-solid fa-eye";
-        } else {
-            icon.className = "fa-solid fa-eye-slash";
-        }
-    });
-
-    elements.btnSaveKey.addEventListener("click", () => {
-        const key = elements.settingsApiKey.value.trim();
-        if (key) {
-            localStorage.setItem("gemini_api_key", key);
-            geminiApiKey = key;
-            useLiveAI = true;
-        } else {
-            localStorage.removeItem("gemini_api_key");
-            geminiApiKey = "";
-            useLiveAI = false;
-        }
-        updateAPIKeyStatus();
-        elements.settingsModal.classList.add("hidden");
-    });
-
-    elements.btnClearKey.addEventListener("click", () => {
-        localStorage.removeItem("gemini_api_key");
-        geminiApiKey = "";
-        useLiveAI = false;
-        elements.settingsApiKey.value = "";
-        updateAPIKeyStatus();
-        elements.settingsModal.classList.add("hidden");
     });
 }
 
@@ -1220,7 +1160,7 @@ Do NOT enclose the JSON in markdown code blocks (e.g. do not write \`\`\`json ..
   ]
 }`;
 
-        let apiURL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${geminiApiKey}`;
+        let apiURL = `https://generativelanguage.googleapis.com/v1beta/models/gemma-4-31b-it:generateContent?key=${geminiApiKey}`;
         const payload = {
             contents: [
                 {
@@ -1248,11 +1188,24 @@ Do NOT enclose the JSON in markdown code blocks (e.g. do not write \`\`\`json ..
             body: JSON.stringify(payload)
         });
 
-        // Fallback: If primary gemini-3.5-flash fails (e.g. 503 high demand), fallback to stable gemini-2.5-flash
+        // Fallback 1: If primary gemma-4-31b-it fails, retry with gemini-3.5-flash
         if (!response.ok) {
-            console.warn(`Primary 3.5 endpoint failed with status ${response.status}. Retrying with stable 2.5...`);
-            const betaURL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
-            response = await fetch(betaURL, {
+            console.warn(`Primary Gemma 4 31B endpoint failed with status ${response.status}. Retrying with Gemini 3.5 Flash...`);
+            const fallback1URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${geminiApiKey}`;
+            response = await fetch(fallback1URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+        }
+
+        // Fallback 2: If Gemini 3.5 Flash fails, retry with stable gemini-2.5-flash
+        if (!response.ok) {
+            console.warn(`Gemini 3.5 Flash endpoint failed with status ${response.status}. Retrying with stable Gemini 2.5 Flash...`);
+            const fallback2URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
+            response = await fetch(fallback2URL, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
