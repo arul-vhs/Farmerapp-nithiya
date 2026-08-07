@@ -1445,28 +1445,34 @@ html, body {
         font-size: 0.65rem;
     }
 
-    /* Tabs layout as horizontal scrollable row */
+    /* Card padding optimization on mobile */
+    .card {
+        padding: 1.1rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Tabs layout as equally distributed row with icon on top on mobile */
     .dashboard-tabs {
         display: flex;
         flex-wrap: nowrap;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        gap: 0.3rem;
+        gap: 0.2rem;
         padding: 4px;
+        margin-bottom: 1rem;
+        overflow-x: visible;
     }
     .tab-btn {
-        flex: 0 0 auto;
-        min-width: max-content;
-        padding: 0.5rem 0.8rem;
-        font-size: 0.76rem;
+        flex: 1;
+        min-width: 0;
+        padding: 0.55rem 0.2rem;
+        font-size: 0.72rem;
+        flex-direction: column;
+        gap: 0.25rem;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
     }
-    /* Hide scrollbars for layout beauty */
-    .dashboard-tabs::-webkit-scrollbar {
-        display: none;
-    }
-    .dashboard-tabs {
-        -ms-overflow-style: none;  /* IE and Edge */
-        scrollbar-width: none;  /* Firefox */
+    .tab-btn i {
+        font-size: 0.95rem;
     }
 
     /* Map container height scaling */
